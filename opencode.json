@@ -1,0 +1,36 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+   "regolo-ai": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "regolo.ai",
+      "options": {
+        "baseURL": "https://api.regolo.ai/v1",
+        "apiKey": "sk-NklmaM1W15f-FWYh8Li-mA"
+      },
+      "models": {
+        "gpt-oss-120b": {
+          "name": "regolo/gpt-oss-120b"
+        },
+        "qwen3-coder-next": {
+          "name": "regolo/qwen3-next-coder"
+        },
+        "gpt-oss-20b": {
+          "name": "regolo/gpt-oss-20b"
+        },
+        "deepseek-r1-70b": {
+          "name": "regolo/deepseek-r1-70b"
+        },
+        "Llama-3.3-70B-Instruct": {
+          "name": "regolo/Llama-3.3-70B-Instruct"
+        },
+        "qwen3-vl-32b": {
+          "name": "regolo/qwen3-vl-32b"
+        },
+        "mistral-small3.2": {
+          "name": "regolo/mistral-small3.2"
+        }
+      }
+    }
+  }
+}

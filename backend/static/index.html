@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Viewer</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="sidebar-header">Sessioni</div>
+            <div id="session-list" class="session-list"></div>
+        </aside>
+        <main class="main">
+            <header class="header">
+                <input type="text" id="search" placeholder="Cerca..." autocomplete="off">
+                <select id="filter">
+                    <option value="all">Tutti</option>
+                    <option value="user">User</option>
+                    <option value="assistant">Assistant</option>
+                    <option value="tool">Tool</option>
+                </select>
+                <button id="compact-mode" title="Compact mode">≡</button>
+                <button id="toggle-order" title="Inverti ordine">▼▲</button>
+            </header>
+            <div id="chat" class="chat"></div>
+        </main>
+        <aside class="regolo-panel">
+            <div class="regolo-header">
+                <span>Regolo.ai Chat</span>
+            </div>
+            <div id="regolo-history" class="regolo-history"></div>
+            <div class="regolo-input-area">
+                <div id="selected-context" class="selected-context"></div>
+                <div class="input-row">
+                    <input type="text" id="regolo-query" placeholder="Scrivi la tua domanda..." autocomplete="off">
+                    <button id="send-query" title="Invia">➤</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        let currentSession = null;
+        let messages = [];
+        let reverseOrder = false;
+        let compactMode = false;
+        let contextMessages = new Set();
+        let regoloHistory = [];
+        let isLoading = false;
+        const POLL_INTERVAL = 1000;
+
+        async function fetchSessions() {
+            try {
+                const res = await fetch('/api/sessions');
+                const sessions = await res.json();
+                renderSessions(sessions);
+            } catch (e) {
+                console.error('Errore caricamento sessioni:', e);
+            }
+        }
+
+        function renderSessions(sessions) {
+            const list = document.getElementById('session-list');
+            list.innerHTML = sessions.map(s => `
+                <div class="session-item ${s.id === currentSession ? 'active' : ''}"
+                     onclick="selectSession('${s.id}')">
+                    <div class="session-name">${s.id.substring(0, 8)}...</div>
+                    <div class="session-time">${formatDateTime(s.modified).date}</div>
+                </div>
+            `).join('');
+        }
+
+        async function selectSession(id) {
+            currentSession = id;
+            contextMessages.clear();
+            updateContextDisplay();
+            document.getElementById('session-list').querySelectorAll('.session-item')
+                .forEach(el => el.classList.remove('active'));
+            await fetchLogs();
+        }
+
+        async function fetchLogs() {
+            if (!currentSession) return;
+            try {
+                const res = await fetch(`/api/logs/${currentSession}`);
+                messages = await res.json();
+                renderMessages();
+            } catch (e) {
+                console.error('Errore caricamento log:', e);
+            }
+        }
+
+        function toggleContext(id) {
+            if (contextMessages.has(id)) {
+                contextMessages.delete(id);
+            } else {
+                contextMessages.add(id);
+            }
+            updateContextDisplay();
+            renderMessages();
+        }
+
+        function copyMessage(id) {
+            const msg = messages.find(m => m.id === id);
+            if (msg) {
+                navigator.clipboard.writeText(msg.content).then(() => {
+                    const btn = document.getElementById(`copy-${id}`);
+                    if (btn) {
+                        btn.textContent = '✓';
+                        setTimeout(() => btn.textContent = '📋', 1000);
+                    }
+                });
+            }
+        }
+
+        function getContextMessages() {
+            return messages
+                .filter(m => contextMessages.has(m.id))
+                .sort((a, b) => {
+                    const ta = new Date(a.timestamp || 0);
+                    const tb = new Date(b.timestamp || 0);
+                    return ta - tb;
+                });
+        }
+
+        function updateContextDisplay() {
+            const container = document.getElementById('selected-context');
+            if (contextMessages.size === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = `<strong>Contesto:</strong> ${contextMessages.size} messaggio(i)`;
+        }
+
+        async function sendToRegolo() {
+            if (isLoading) return;
+            const query = document.getElementById('regolo-query').value.trim();
+            if (!query) return;
+
+            const context = getContextMessages();
+            isLoading = true;
+            document.getElementById('send-query').classList.add('loading');
+
+            regoloHistory.push({ role: 'user', content: query });
+            renderRegoloHistory();
+
+            document.getElementById('regolo-query').value = '';
+            contextMessages.clear();
+            updateContextDisplay();
+            renderMessages();
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, context })
+                });
+                const data = await res.json();
+                regoloHistory.push({ role: 'assistant', content: data.response || 'Errore nella risposta' });
+            } catch (e) {
+                regoloHistory.push({ role: 'assistant', content: `Errore: ${e.message}` });
+            }
+
+            isLoading = false;
+            document.getElementById('send-query').classList.remove('loading');
+            renderRegoloHistory();
+        }
+
+        function renderRegoloHistory() {
+            const container = document.getElementById('regolo-history');
+            container.innerHTML = regoloHistory.map(msg => `
+                <div class="regolo-message ${msg.role}">
+                    <div class="regolo-content">${escapeHtml(msg.content)}</div>
+                </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function renderMessages() {
+            const chat = document.getElementById('chat');
+            const search = document.getElementById('search').value.toLowerCase();
+            const filter = document.getElementById('filter').value;
+
+            let filtered = messages.filter(m => {
+                const matchSearch = m.content.toLowerCase().includes(search);
+                const matchFilter = filter === 'all' || m.role === filter;
+                return matchSearch && matchFilter;
+            });
+
+            if (reverseOrder) filtered = filtered.reverse();
+
+            chat.innerHTML = filtered.map(m => {
+                const dt = formatDateTime(m.timestamp);
+                const hasContext = contextMessages.has(m.id);
+                return `
+                <div class="message ${m.role} ${hasContext ? 'selected' : ''}">
+                    <div class="message-actions">
+                        <button class="action-btn ${hasContext ? 'active' : ''}" 
+                                onclick="toggleContext('${m.id}')" 
+                                title="Aggiungi a contesto">+</button>
+                        <button class="action-btn" 
+                                onclick="copyMessage('${m.id}')" 
+                                id="copy-${m.id}"
+                                title="Copia">📋</button>
+                    </div>
+                    <div class="message-header">
+                        <div class="message-meta">
+                            <span class="role-badge ${m.role}">${m.role.toUpperCase()}</span>
+                            <span class="timestamp">${dt.date} ${dt.time}</span>
+                        </div>
+                    </div>
+                    <div class="message-content">${parseMarkdown(m.content)}</div>
+                    <div class="message-id">ID: ${m.id}</div>
+                </div>
+            `;}).join('');
+        }
+
+        function formatDateTime(ts) {
+            if (!ts) return { date: '', time: '' };
+            try {
+                const d = new Date(ts);
+                return {
+                    date: d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' }),
+                    time: d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+                };
+            } catch {
+                return { date: ts, time: '' };
+            }
+        }
+
+        function parseMarkdown(text) {
+            let html = escapeHtml(text);
+            html = html.replace(/\n/g, '<br>');
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+            html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
+            return html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.getElementById('search').addEventListener('input', renderMessages);
+        document.getElementById('filter').addEventListener('change', renderMessages);
+        document.getElementById('toggle-order').addEventListener('click', () => {
+            reverseOrder = !reverseOrder;
+            renderMessages();
+        });
+        document.getElementById('compact-mode').addEventListener('click', () => {
+            compactMode = !compactMode;
+            document.getElementById('chat').classList.toggle('compact', compactMode);
+            document.getElementById('compact-mode').classList.toggle('active', compactMode);
+        });
+        document.getElementById('regolo-query').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendToRegolo();
+        });
+        document.getElementById('send-query').addEventListener('click', sendToRegolo);
+
+        function init() {
+            fetchSessions();
+            setInterval(fetchLogs, POLL_INTERVAL);
+        }
+
+        init();
+    </script>
+</body>
+</html>
