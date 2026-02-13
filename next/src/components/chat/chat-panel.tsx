@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Bot, User, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Bot } from "lucide-react";
 import {
   PromptInput,
   PromptInputBody,
@@ -18,6 +16,17 @@ import {
   PromptInputSubmit,
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -38,14 +47,6 @@ export function ChatPanel({
   onSend,
   contextSelected,
 }: ChatPanelProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
   const handleSubmit = (message: PromptInputMessage) => {
     if (!isStreaming && message.text.trim()) {
       onSend(message.text.trim());
@@ -65,56 +66,31 @@ export function ChatPanel({
         )}
       </div>
 
-      <ScrollArea ref={scrollRef} className="flex-1">
-        <div className="p-5 space-y-6">
+      <Conversation>
+        <ConversationContent>
           {messages.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Bot className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">Seleziona dei messaggi dai log per usarli come contesto.</p>
-              <p className="text-sm mt-2">Inizia una conversazione qui.</p>
-            </div>
+            <ConversationEmptyState
+              title="Nessun messaggio"
+              description="Seleziona dei messaggi dai log per usarli come contesto, oppure inizia una conversazione."
+              icon={<Bot className="h-12 w-12 opacity-50" />}
+            />
           ) : (
             messages.map((msg, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "flex gap-4",
-                  msg.role === "user" ? "flex-row-reverse" : "flex-row"
-                )}
-              >
-                <div
-                  className={cn(
-                    "max-w-[85%] rounded-lg px-3 py-2 border-l-4 shadow-md",
-                    msg.role === "user"
-                      ? "bg-[--log-user-bg] text-[--log-user-text] border-orange-400"
-                      : "bg-[--log-assistant-bg] text-[--log-assistant-text] border-gray-400"
-                  )}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    {msg.role === "user" ? (
-                      <User className="h-3 w-3" />
-                    ) : (
-                      <Bot className="h-3 w-3" />
-                    )}
-                    <span className="text-xs font-medium capitalize">
-                      {msg.role}
-                    </span>
-                    {msg.isStreaming && (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    )}
-                  </div>
-                  <div className="text-sm whitespace-pre-wrap">
+              <Message key={index} from={msg.role}>
+                <MessageContent>
+                  <MessageResponse>
                     {msg.content}
                     {msg.isStreaming && (
                       <span className="inline-block w-1 h-3 ml-0.5 bg-current animate-pulse" />
                     )}
-                  </div>
-                </div>
-              </div>
+                  </MessageResponse>
+                </MessageContent>
+              </Message>
             ))
           )}
-        </div>
-      </ScrollArea>
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
 
       <div className="border-t p-5">
         <PromptInput
