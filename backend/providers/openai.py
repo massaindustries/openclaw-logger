@@ -38,3 +38,12 @@ class OpenAIProvider(BaseLLMProvider):
             })
         messages.append({"role": "user", "content": query})
         return messages
+
+    async def list_models(self) -> list[dict]:
+        """Fetch the list of models from OpenAI-compatible API."""
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(f"{self.base_url}/models", headers={"Authorization": f"Bearer {self.api_key}"})
+            response.raise_for_status()
+            data = response.json()
+            # OpenAI returns {data: [{id:..., ...}], object: "list"}
+            return data.get("data", [])

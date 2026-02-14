@@ -5,6 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Carica automaticamente le variabili d'ambiente dal file .env se presente
+load_dotenv()
 import json
 import asyncio
 from providers import get_provider
@@ -25,7 +29,9 @@ class ChatRequest(BaseModel):
     query: str
     context: str | None = None
     provider: str = "openai-compatible"
-    model: str = "Llama-3.3-70B-Instruct"
+    model: str = "gpt-4o"
+    apiKey: str | None = None  # optional API key supplied by client
+    baseUrl: str | None = None  # optional custom base URL for OpenAI-compatible
 
 
 app = FastAPI()
@@ -38,7 +44,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-SESSIONS_DIR = Path(__file__).parent.parent / "agents" / "main" / "sessions"
+# Default sessions directory is located at the repository root 'sessions' folder.
+SESSIONS_DIR = Path(__file__).resolve().parents[2] / "sessions"
 
 
 def count_messages(file_path: Path) -> int:
@@ -61,7 +68,9 @@ def count_messages(file_path: Path) -> int:
 @app.get("/api/sessions")
 async def list_sessions(path: str | None = None):
     sessions = []
-    sessions_dir = Path(path) if path else SESSIONS_DIR
+    # Resolve the provided path to an absolute path to ensure it works correctly
+    # even if a relative or user-home-relative path is supplied.
+    sessions_dir = Path(path).expanduser().resolve() if path else SESSIONS_DIR
 
     if not sessions_dir.exists():
         return sessions
@@ -86,7 +95,8 @@ async def list_sessions(path: str | None = None):
 
 @app.get("/api/logs/{session_id}")
 async def get_logs(session_id: str, path: str | None = None):
-    sessions_dir = Path(path) if path else SESSIONS_DIR
+    # Resolve custom path similarly to list_sessions
+    sessions_dir = Path(path).expanduser().resolve() if path else SESSIONS_DIR
     
     json_file = sessions_dir / f"{session_id}.json"
     jsonl_file = sessions_dir / f"{session_id}.jsonl"
@@ -146,7 +156,11 @@ async def get_logs(session_id: str, path: str | None = None):
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     try:
-        provider = get_provider(request.provider)
+        # Instantiate provider; allow custom base URL for OpenAI-compatible
+        provider = get_provider(request.provider, request.apiKey)
+        # If the request includes a custom base URL and the provider supports it, set it
+        if request.provider.lower() in ("openai-compatible", "openai", "regolo") and getattr(request, "baseUrl", None):
+            setattr(provider, "base_url", request.baseUrl)
         messages = provider.format_message(request.query, request.context)
 
         async def generate():
@@ -160,6 +174,21 @@ async def chat(request: ChatRequest):
         return EventSourceResponse(generate())
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# New endpoint: list models for a given provider
+@app.get("/api/models/{provider}")
+async def list_models_endpoint(provider: str, apiKey: str | None = None, baseUrl: str | None = None):
+    # Get provider instance, overriding API key if supplied
+    instance = get_provider(provider, apiKey)
+    # Apply custom base URL for OpenAI-compatible if provided
+    if provider.lower() in ("openai-compatible", "openai", "regolo") and baseUrl:
+        setattr(instance, "base_url", baseUrl)
+    # Call provider-specific list_models method
+    try:
+        models = await instance.list_models()
+        return models
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

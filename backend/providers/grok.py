@@ -38,3 +38,24 @@ class GrokProvider(BaseLLMProvider):
             })
         messages.append({"role": "user", "content": query})
         return messages
+
+    async def list_models(self) -> list[dict]:
+        """Fetch list of Grok models via the /models endpoint."""
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(f"{self.base_url}/models", headers={"Authorization": f"Bearer {self.api_key}"})
+            response.raise_for_status()
+            data = response.json()
+            # Expecting a list under "data" or "models"
+            if isinstance(data, dict):
+                models = data.get("data") or data.get("models") or []
+            else:
+                models = []
+            # Normalize to list of dicts with id and name
+            result = []
+            for m in models:
+                if isinstance(m, dict):
+                    result.append({"id": m.get("id", m.get("name", "")), "name": m.get("name", m.get("id", ""))})
+                else:
+                    # If it's a string
+                    result.append({"id": str(m), "name": str(m)})
+            return result

@@ -46,3 +46,13 @@ class AnthropicProvider(BaseLLMProvider):
             })
         messages.append({"role": "user", "content": query})
         return messages
+
+    async def list_models(self) -> list[dict]:
+        """Fetch list of models from Anthropic API."""
+        headers = {"Authorization": f"Bearer {self.api_key}", "anthropic-version": "2023-06-01"}
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(f"{self.base_url}/models", headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            # Anthropic returns {data: [{id:..., ...}] }? Actually returns {data: [{id:..., name:...}]}
+            return data.get("data", [])

@@ -40,3 +40,13 @@ class GoogleProvider(BaseLLMProvider):
             parts.append({"text": f"You are an AI assistant. Use the following context to answer the user's question.\n\nContext:\n{context}"})
         parts.append({"text": query})
         return [{"role": "user", "parts": parts}]
+
+    async def list_models(self) -> list[dict]:
+        """List available Gemini models."""
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(f"{self.base_url}/models", params={"key": self.api_key})
+            response.raise_for_status()
+            data = response.json()
+            # Google returns {models: [{name: "..."}, ...]}
+            # We'll map name to a friendly id (just the name string)
+            return [{"id": m.get("name", ""), "name": m.get("name", "")} for m in data.get("models", [])]
