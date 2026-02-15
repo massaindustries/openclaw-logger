@@ -185,10 +185,26 @@ async def list_models_endpoint(provider: str, apiKey: str | None = None, baseUrl
     # Apply custom base URL for OpenAI-compatible if provided
     if provider.lower() in ("openai-compatible", "openai", "regolo") and baseUrl:
         setattr(instance, "base_url", baseUrl)
+
+    # If the provider does not have an API key configured, return an empty list
+    if not getattr(instance, "api_key", None):
+        return []
+
     # Call provider-specific list_models method
     try:
         models = await instance.list_models()
-        return models
+        # Filter out unwanted models
+        exclude = ["deppseek ocr", "faster whisper", "gte qwen2", "qwen image", "qwen embedding 8b", "qwen3 embedding", "qwen3 embed", "qwen3-embedding-8b"]
+        def normalize(s: str) -> str:
+            return s.lower().replace("-", " ").replace("_", " ")
+        filtered = []
+        for m in models:
+            combined = f"{m.get('id','')} {m.get('name','')}"
+            norm = normalize(combined)
+            if any(term in norm for term in exclude):
+                continue
+            filtered.append(m)
+        return filtered
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -40,6 +40,9 @@ class GrokProvider(BaseLLMProvider):
         return messages
 
     async def list_models(self) -> list[dict]:
+        # If no API key is set, return empty list
+        if not getattr(self, "api_key", None):
+            return []
         """Fetch list of Grok models via the /models endpoint."""
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(f"{self.base_url}/models", headers={"Authorization": f"Bearer {self.api_key}"})

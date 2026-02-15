@@ -62,6 +62,25 @@ export async function sendChat(request: ChatRequest): Promise<ChatStreamEvent[]>
   return events;
 }
 
+export async function fetchModels(provider: string, apiKey?: string, baseUrl?: string): Promise<any[]> {
+  try {
+    const url = new URL(`${API_BASE}/api/models/${provider}`);
+    if (apiKey) url.searchParams.set('apiKey', apiKey);
+    if (baseUrl) url.searchParams.set('baseUrl', baseUrl);
+    const res = await fetch(url.toString());
+    if (!res.ok) {
+      // Return empty list on any HTTP error (e.g., backend not running)
+      console.error(`Failed to fetch models for ${provider}: ${res.status} ${res.statusText}`);
+      return [];
+    }
+    return await res.json();
+  } catch (e) {
+    // Network or other error – log and return empty list
+    console.error('Error fetching models:', e);
+    return [];
+  }
+}
+
 export async function sendChatStreaming(
   request: ChatRequest,
   onChunk: (event: ChatStreamEvent) => void

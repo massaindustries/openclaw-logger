@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "@/lib/theme-provider";
+import { Google_Sans_Flex, Google_Sans_Code } from "next/font/google";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const googleSansFlex = Google_Sans_Flex({
+  variable: "--font-google-sans-flex",
   subsets: ["latin"],
+  // Provide a simple fallback to avoid override warnings
+  fallback: ["system-ui", "sans-serif"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const googleSansCode = Google_Sans_Code({
+  variable: "--font-google-sans-code",
   subsets: ["latin"],
+  fallback: ["monospace", "sans-serif"],
 });
 
 export const metadata: Metadata = {
@@ -30,9 +33,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen min-h-screen`}
+        className={`${googleSansFlex.variable} ${googleSansCode.variable} antialiased h-screen min-h-screen`}
       >
-        <ThemeProvider
+        <NextThemesProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem
@@ -41,7 +44,7 @@ export default function RootLayout({
           <TooltipProvider>
             {children}
           </TooltipProvider>
-        </ThemeProvider>
+        </NextThemesProvider>
       </body>
     </html>
   );

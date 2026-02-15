@@ -48,6 +48,9 @@ class AnthropicProvider(BaseLLMProvider):
         return messages
 
     async def list_models(self) -> list[dict]:
+        # If no API key is set, return empty list
+        if not getattr(self, "api_key", None):
+            return []
         """Fetch list of models from Anthropic API."""
         headers = {"Authorization": f"Bearer {self.api_key}", "anthropic-version": "2023-06-01"}
         async with httpx.AsyncClient(timeout=30.0) as client:

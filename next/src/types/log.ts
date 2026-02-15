@@ -25,6 +25,9 @@ export interface APIError {
 export interface ChatRequest {
   query: string;
   context?: string;
+  /** Optional provider (e.g. "openai-compatible", "anthropic", "google", "grok") */
+  provider?: string;
+  /** Optional model identifier (e.g. "gpt-4o") */
   model?: string;
 }
 

@@ -42,6 +42,9 @@ class GoogleProvider(BaseLLMProvider):
         return [{"role": "user", "parts": parts}]
 
     async def list_models(self) -> list[dict]:
+        # If no API key is set, return empty list
+        if not getattr(self, "api_key", None):
+            return []
         """List available Gemini models."""
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(f"{self.base_url}/models", params={"key": self.api_key})

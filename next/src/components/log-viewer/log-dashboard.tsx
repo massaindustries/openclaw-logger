@@ -30,6 +30,8 @@ export function LogDashboard() {
     clearContextSelection,
     addChatMessage,
     setLoading,
+    selectedProvider,
+    selectedModel,
   } = useLogStore();
 
   const [isStreaming, setIsStreaming] = useState(false);
@@ -39,7 +41,7 @@ export function LogDashboard() {
       const data = await fetchSessions(customSessionsPath || undefined);
       setSessions(data);
     } catch {
-      toast.error("Errore nel caricamento sessioni");
+      toast.error("Error loading sessions");
     }
   }, [setSessions, customSessionsPath]);
 
@@ -50,7 +52,7 @@ export function LogDashboard() {
       setLogs(data);
       clearContextSelection();
     } catch {
-      toast.error("Errore nel caricamento log");
+      toast.error("Error loading log");
     } finally {
       setLoading(false);
     }
@@ -93,30 +95,42 @@ export function LogDashboard() {
 
     try {
       await sendChatStreaming(
-        { query: message, context: context || undefined },
+        { query: message, context: context || undefined, provider: selectedProvider, model: selectedModel },
         (event) => {
-          if (event.type === "content") {
-            const lastMsg = chatMessages[chatMessages.length - 1];
-            if (lastMsg && lastMsg.role === "assistant") {
-              useLogStore.setState((state) => ({
-                chatMessages: [
-                  ...state.chatMessages.slice(0, -1),
-                  { ...lastMsg, content: lastMsg.content + event.content },
-                ],
-              }));
-            } else {
-              addChatMessage("assistant", event.content);
+if (event.type === "content") {
+              // Get the latest chat messages from the store to avoid stale closure
+              const currentMessages = useLogStore.getState().chatMessages;
+              const lastMsg = currentMessages[currentMessages.length - 1];
+              if (lastMsg && lastMsg.role === "assistant") {
+                useLogStore.setState((state) => {
+                  const latest = state.chatMessages[state.chatMessages.length - 1];
+                  if (latest && latest.role === "assistant") {
+                    return {
+                      chatMessages: [
+                        ...state.chatMessages.slice(0, -1),
+                        { ...latest, content: latest.content + event.content },
+                      ],
+                    };
+                  }
+                  // Fallback: add new assistant message (should not happen)
+                  return {
+                    chatMessages: [...state.chatMessages, { role: "assistant", content: event.content }],
+                  };
+                });
+              } else {
+                // No assistant message yet, add a new one
+                addChatMessage("assistant", event.content);
+              }
+            } else if (event.type === "done") {
+              setIsStreaming(false);
+            } else if (event.type === "error") {
+              toast.error(event.error);
+              setIsStreaming(false);
             }
-          } else if (event.type === "done") {
-            setIsStreaming(false);
-          } else if (event.type === "error") {
-            toast.error(event.error);
-            setIsStreaming(false);
-          }
         }
       );
     } catch {
-      toast.error("Errore nella chat");
+      toast.error("Error in chat");
       setIsStreaming(false);
     }
   };
@@ -124,6 +138,14 @@ export function LogDashboard() {
   const handleClearSelection = () => {
     clearContextSelection();
   };
+
+  const handleRemoveLog = (id: string) => {
+    const newSet = new Set(selectedContextIds);
+    newSet.delete(id);
+    useLogStore.setState({ selectedContextIds: newSet });
+  };
+
+  const selectedLogs = logs.filter((log) => selectedContextIds.has(log.id));
 
   return (
     <div className="h-screen w-full min-w-0">
@@ -149,14 +171,14 @@ export function LogDashboard() {
         <ResizableHandle
           id="handle-1"
           withHandle
-          className="resizable-handle w-3 hover:w-4 transition-all"
+          className="resizable-handle w-3 hover:w-4 transition-all border-r border-[#222222]"
         />
 
         <ResizablePanel
           id="log-panel"
           defaultSize={50}
           minSize={25}
-          className="min-w-[250px] bg-card"
+          className="min-w-0 bg-[#1a1a1a] overflow-hidden"
         >
           <LogPanel
             logs={logs}
@@ -175,7 +197,7 @@ export function LogDashboard() {
         <ResizableHandle
           id="handle-2"
           withHandle
-          className="resizable-handle w-3 hover:w-4 transition-all"
+          className="resizable-handle w-3 hover:w-4 transition-all border-l border-[#222222]"
         />
 
         <ResizablePanel
@@ -188,7 +210,9 @@ export function LogDashboard() {
             messages={chatMessages}
             isStreaming={isStreaming}
             onSend={handleSendChat}
-            contextSelected={selectedContextIds.size > 0}
+            selectedLogs={selectedLogs}
+            onRemoveLog={handleRemoveLog}
+            onClearSelection={handleClearSelection}
           />
         </ResizablePanel>
       </ResizablePanelGroup>
