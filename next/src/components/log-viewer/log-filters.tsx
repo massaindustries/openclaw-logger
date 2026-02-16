@@ -44,7 +44,7 @@ export function LogFilters({
   return (
     <>
         {/* Fixed header height for central log panel – do not modify */}
-        <div className="flex items-center p-3 border-b border-[#222222] bg-[#111111] min-w-0 shrink-0">
+        <div className="flex items-center p-3 h-14 border-b border-[#222222] bg-[#111111] min-w-0 shrink-0">
       <div className="relative flex-none w-[200px] min-w-[180px] mb-0">
         <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
         <Input

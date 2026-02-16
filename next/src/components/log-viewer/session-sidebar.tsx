@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { RefreshCw, FileText, Settings, FolderOpen } from "lucide-react";
+import { RefreshCw, FileText, Settings, FolderOpen, ChevronRight, ChevronDown } from "lucide-react";
 import { useLogStore } from "@/store/log-store";
 import { cn } from "@/lib/utils";
 
 interface SessionSidebarProps {
+  compact?: boolean;
+  onToggleCompact?: () => void;
   sessions: Session[];
   selectedSession: Session | null;
   onSelectSession: (session: Session) => void;
@@ -25,6 +27,8 @@ export function SessionSidebar({
   onSelectSession,
   isLoading,
   onRefresh,
+  compact,
+  onToggleCompact,
 }: SessionSidebarProps) {
   const { customSessionsPath, setCustomSessionsPath, isPathConfigOpen, setPathConfigOpen } = useLogStore();
   const [pathInput, setPathInput] = useState(customSessionsPath || "");
@@ -49,7 +53,7 @@ export function SessionSidebar({
 
   return (
     <div className="h-full w-full flex flex-col border-r border-[#222222] bg-[#1a1a1a] min-w-0 overflow-hidden">
-      <div className="p-3.5 border-b border-[#222222] flex items-center justify-between bg-[#111111]">
+      <div className="p-3 h-14 border-b border-[#222222] flex items-center justify-between bg-[#111111]">
         <h2 className="font-semibold text-sm">Sessions</h2>
         <div className="flex items-center gap-2">
           <Button
@@ -67,8 +71,20 @@ export function SessionSidebar({
             disabled={isLoading}
           >
             <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
+</Button>
+          {/* Compact Sessions Button */}
+          {onToggleCompact && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleCompact}
+              title={compact ? "Expand Sessions" : "Compact Sessions"}
+              className="h-6 w-6 p-0 hover:bg-black/10 dark:hover:bg-white/10 shrink-0"
+            >
+              {compact ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className={`h-4 w-4 ${!compact ? 'rotate-180' : ''}`} />}
+            </Button>
+          )}
+          </div>
       </div>
 
       <div className="flex-1 overflow-hidden">

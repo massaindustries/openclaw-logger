@@ -62,24 +62,27 @@ const addKeysToTokens = (lines: ThemedToken[][]): KeyedLine[] =>
     })),
   }));
 
-// Token rendering component
-const TokenSpan = ({ token }: { token: ThemedToken }) => (
-  <span
-    className="dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)]"
-    style={
-      {
-        backgroundColor: token.bgColor,
-        color: token.color,
-        fontStyle: isItalic(token.fontStyle) ? "italic" : undefined,
-        fontWeight: isBold(token.fontStyle) ? "bold" : undefined,
-        textDecoration: isUnderline(token.fontStyle) ? "underline" : undefined,
-        ...token.htmlStyle,
-      } as CSSProperties
-    }
-  >
-    {token.content}
-  </span>
-);
+// Token rendering component - no background on tokens, only text color
+const TokenSpan = ({ token }: { token: ThemedToken }) => {
+  // Remove background-color from htmlStyle to prevent token-level backgrounds
+  const { backgroundColor, ...htmlStyleNoBg } = (token.htmlStyle ?? {}) as Record<string, unknown>;
+  
+  return (
+    <span
+      style={
+        {
+          color: token.color,
+          fontStyle: isItalic(token.fontStyle) ? "italic" : undefined,
+          fontWeight: isBold(token.fontStyle) ? "bold" : undefined,
+          textDecoration: isUnderline(token.fontStyle) ? "underline" : undefined,
+          ...htmlStyleNoBg,
+        } as CSSProperties
+      }
+    >
+      {token.content}
+    </span>
+  );
+};
 
 // Line rendering component
 const LineSpan = ({
@@ -148,7 +151,7 @@ const getHighlighter = (
 
   const highlighterPromise = createHighlighter({
     langs: [language],
-    themes: ["github-light", "github-dark"],
+    themes: ["github-dark"],
   });
 
   highlighterCache.set(language, highlighterPromise);
@@ -203,16 +206,38 @@ export const highlightCode = (
 
       const result = highlighter.codeToTokens(code, {
         lang: langToUse,
-        themes: {
-          dark: "github-dark",
-          light: "github-light",
-        },
+        theme: "github-dark",
       });
 
+      // Color mapping from github-dark to custom palette
+      const colorMap: Record<string, string> = {
+        '#ff7b72': '#ff79c6',  // red -> pink
+        '#ff5555': '#ff79c6',  // red -> pink  
+        '#79b8ff': '#8be9fd',  // blue -> cyan
+        '#58a6ff': '#8be9fd',  // blue -> cyan
+        '#a5d6ff': '#bd93f9',  // light blue -> purple
+        '#d299c2': '#f1fa8c',  // pinkish -> yellow
+        '#79c0ff': '#ffb86c',  // blue -> orange
+        '#8b949e': '#6272a4',  // gray -> comment gray
+        '#6A737D': '#6272a4',  // gray -> comment gray
+        '#B392F0': '#bd93f9',  // purple -> purple
+        '#E1E4E8': '#f8f8f2',  // light gray -> white
+        '#9ECBFF': '#8be9fd',  // light blue -> cyan
+      };
+
+      // Transform tokens with custom colors
+      const transformedTokens = result.tokens.map(line => 
+        line.map(token => ({
+          ...token,
+          color: (token.color && colorMap[token.color]) || token.color,
+          bgColor: token.bgColor && colorMap[token.bgColor] ? colorMap[token.bgColor] : token.bgColor,
+        }))
+      );
+
       const tokenized: TokenizedCode = {
-        bg: result.bg ?? "transparent",
-        fg: result.fg ?? "inherit",
-        tokens: result.tokens,
+        bg: '#1a1a1a',  // Dark background
+        fg: '#f8f8f2',  // Light foreground
+        tokens: transformedTokens,
       };
 
       // Cache the result
@@ -276,7 +301,7 @@ const CodeBlockBody = memo(
     return (
       <pre
         className={cn(
-          "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm min-w-0",
+          "m-0 p-0 text-sm min-w-0",
           className
         )}
         style={{ ...preStyle, maxWidth: "100%" } as CSSProperties}
@@ -314,13 +339,15 @@ export const CodeBlockContainer = ({
 }: HTMLAttributes<HTMLDivElement> & { language: string }) => (
   <div
     className={cn(
-      "group relative w-full overflow-x-auto rounded-md border bg-background text-foreground min-w-0 my-4",
+      "group relative w-full overflow-x-auto rounded-md border bg-[#1a1a1a] text-[#f8f8f2] min-w-0 my-4",
       className
     )}
     data-language={language}
     style={{
-      containIntrinsicSize: "auto 200px",
+      // contentVisibility: "auto",
+      // containIntrinsicSize: "auto 200px",
       contentVisibility: "auto",
+      containIntrinsicSize: "auto 0px",
       maxWidth: "100%",
       ...style,
     }}
@@ -335,7 +362,7 @@ export const CodeBlockHeader = ({
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex items-center justify-between border-b bg-muted/80 px-3 py-2 text-muted-foreground text-xs",
+      "flex items-center justify-between border-b bg-muted/80 px-3 py-3.5 text-muted-foreground text-xs",
       className
     )}
     {...props}

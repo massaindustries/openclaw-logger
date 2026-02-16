@@ -21,7 +21,6 @@
 
 
 
-
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -71,7 +70,6 @@
 
 
 
-
   --sidebar: #fff;
   --sidebar-foreground: #222222;
   --sidebar-primary: #ff5655;
@@ -112,7 +110,6 @@
 
 
 
-
   --sidebar: #121212;
   --sidebar-foreground: #fff;
   --sidebar-primary: #ff5655;
@@ -129,7 +126,6 @@
   --log-tool-bg: #15002e;
   --log-tool-text: #fff;
 }
-
 
 /* Override log colors for dark theme */
 .dark {

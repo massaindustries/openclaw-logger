@@ -3,7 +3,8 @@
 
 
 // Mapping of provider names to logo URLs (placeholders). Add real images under public/logos if desired.
-const LOGO_MAP: Record<string, string> = { "openai-compatible": "/logos/openai.jpg", "mistral": "/logos/mistral.png", "regolo": "/loghiprovider/logoregolo.png", 
+const LOGO_MAP: Record<string, string> = { "openai-compatible": "/logos/openai.jpg", "mistral": "/logos/mistral.png", "regolo": "/loghiprovider/logoregolo.png", "anthropic": "/loghiprovider/anthropic-1.svg", "google": "/loghiprovider/gemini-color.png",
+    "grok": "/loghiprovider/xai.svg",
 
 };
 

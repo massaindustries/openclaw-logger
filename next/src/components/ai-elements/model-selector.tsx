@@ -2,6 +2,7 @@
 
 import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 
 import {
@@ -66,35 +67,37 @@ export function ModelSelectorContent({ className, ...props }: React.ComponentPro
   // List of providers we support
   const providers = ["regolo", "openai-compatible", "anthropic", "google", "grok"];
 
+  const loadModels = async () => {
+    setIsFetchingModels(true);
+    const newOptions: Record<string, { id: string; name: string }[]> = {};
+    for (const p of providers) {
+      if (!apiKeys[p]) {
+        newOptions[p] = [];
+        continue;
+      }
+      try {
+        const models = await fetchModels(p, apiKeys[p], p === "openai-compatible" ? openAIBaseUrl : undefined);
+        newOptions[p] = Array.isArray(models)
+          ? models.map((m: { id?: string; name?: string }) => ({
+              id: m.id ?? m.name ?? "",
+              name: m.name ?? m.id ?? "",
+            }))
+          : [];
+      } catch (e) {
+        console.error(`Failed to load models for ${p}`, e);
+        newOptions[p] = [];
+      }
+    }
+    setModelOptions(newOptions);
+    setIsFetchingModels(false);
+  };
+
   const [modelOptions, setModelOptions] = useState<Record<string, { id: string; name: string }[]>>({});
+  const [isFetchingModels, setIsFetchingModels] = useState(false);
 
   // Load models for each provider on mount or when keys/baseUrl change
   useEffect(() => {
-    const load = async () => {
-      const newOptions: Record<string, { id: string; name: string }[]> = {};
-      for (const p of providers) {
-        if (!apiKeys[p]) {
-          // No API key configured – no models to load
-          newOptions[p] = [];
-          continue;
-        }
-        try {
-          const models = await fetchModels(p, apiKeys[p], p === "openai-compatible" ? openAIBaseUrl : undefined);
-          // Normalize to id & name (fallback to id if name missing)
-newOptions[p] = Array.isArray(models)
-            ? models.map((m: { id?: string; name?: string }) => ({
-                id: m.id ?? m.name ?? "",
-                name: m.name ?? m.id ?? "",
-              }))
-            : [];
-        } catch (e) {
-          console.error(`Failed to load models for ${p}`, e);
-          newOptions[p] = [];
-        }
-      }
-      setModelOptions(newOptions);
-    };
-    load();
+    loadModels();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKeys, openAIBaseUrl]);
 
@@ -108,7 +111,16 @@ newOptions[p] = Array.isArray(models)
       <DialogTitle className="sr-only">Select model</DialogTitle>
       <Command>
         <CommandInput placeholder="Search model…" />
-          <div className="my-2" />
+          <div className="my-2 flex justify-end pt-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={loadModels}
+            disabled={isFetchingModels}
+          >
+            {isFetchingModels ? "Fetching…" : "Fetch Models"}
+          </Button>
+        </div>
         <CommandList>
           <CommandEmpty>No model found.</CommandEmpty>
 {providers.map((provider) => (

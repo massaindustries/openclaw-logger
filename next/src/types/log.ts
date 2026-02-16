@@ -29,6 +29,10 @@ export interface ChatRequest {
   provider?: string;
   /** Optional model identifier (e.g. "gpt-4o") */
   model?: string;
+  /** API key for the selected provider */
+  apiKey?: string;
+  /** Custom base URL for OpenAI-compatible providers */
+  baseUrl?: string;
 }
 
 export interface ChatResponse {

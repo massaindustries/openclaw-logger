@@ -1,11 +1,10 @@
-import os
 from typing import AsyncIterator
 import httpx
 from .base import BaseLLMProvider
 
 class GoogleProvider(BaseLLMProvider):
     def __init__(self):
-        self.api_key = os.getenv("GOOGLE_API_KEY")
+        self.api_key = None
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
 
     async def stream(self, messages: list[dict], model: str = "gemini-1.5-pro") -> AsyncIterator[str]:
@@ -42,14 +41,22 @@ class GoogleProvider(BaseLLMProvider):
         return [{"role": "user", "parts": parts}]
 
     async def list_models(self) -> list[dict]:
-        # If no API key is set, return empty list
-        if not getattr(self, "api_key", None):
-            return []
         """List available Gemini models."""
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(f"{self.base_url}/models", params={"key": self.api_key})
-            response.raise_for_status()
-            data = response.json()
-            # Google returns {models: [{name: "..."}, ...]}
-            # We'll map name to a friendly id (just the name string)
-            return [{"id": m.get("name", ""), "name": m.get("name", "")} for m in data.get("models", [])]
+        if not self.api_key:
+            return []
+        
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(
+                    f"{self.base_url}/models",
+                    params={"key": self.api_key}
+                )
+                response.raise_for_status()
+                data = response.json()
+                return [{"id": m.get("name", ""), "name": m.get("name", "")} for m in data.get("models", [])]
+        except httpx.HTTPStatusError as e:
+            print(f"Google API error: {e.response.status_code} - {e.response.text}")
+            return []
+        except Exception as e:
+            print(f"Error fetching Google models: {e}")
+            return []

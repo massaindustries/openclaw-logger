@@ -403,17 +403,17 @@ const roleConfig = {
   user: {
     icon: User,
     label: "User",
-    color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    color: "bg-primary/20 border-primary text-primary-foreground hover:bg-primary/30",
   },
-  assistant: {
-    icon: Bot,
-    label: "Assistant",
-    color: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  },
+assistant: {
+      icon: Bot,
+      label: "Assistant",
+      color: "bg-[#5a00d6]/20 border-[#5a00d6] text-white hover:bg-[#5a00d6]/30",
+    },
   tool: {
     icon: Wrench,
     label: "Tool",
-    color: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    color: "bg-[#3700c0]/20 border-[#3700c0] text-white hover:bg-[#3700c0]/30",
   },
 };
 
@@ -1243,7 +1243,7 @@ export type PromptInputSubmitProps = ComponentProps<typeof InputGroupButton> & {
 export const PromptInputSubmit = ({
   className,
   variant = "default",
-  size = "sm",
+  size = "icon-sm",
   status,
   onStop,
   onClick,
@@ -1277,7 +1277,7 @@ export const PromptInputSubmit = ({
   return (
     <InputGroupButton
       aria-label={isGenerating ? "Stop" : "Submit"}
-className={cn(className, "w-12")}
+className={cn(className)}
         onClick={handleClick}
       size={size}
       type={isGenerating && onStop ? "button" : "submit"}

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { cjk } from "@streamdown/cjk";
-import { code } from "@streamdown/code";
+import { createCodePlugin } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
@@ -58,7 +58,7 @@ export const MessageContent = ({
   <div
     className={cn(
       "is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-1 overflow-hidden text-sm",
-      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-white",
+      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:px-5 group-[.is-user]:py-4 group-[.is-user]:text-white",
       "group-[.is-assistant]:text-white","group-[.is-tool]:bg-[var(--log-tool-bg)] group-[.is-tool]:text-[var(--log-tool-text)]",
       className
     )}
@@ -327,17 +327,19 @@ export const MessageBranchPage = ({
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
-const streamdownPlugins = { cjk, code, math, mermaid };
+const codePlugin = createCodePlugin({ themes: ["one-dark-pro", "one-dark-pro"] });
+const streamdownPlugins = { cjk, code: codePlugin, math, mermaid };
 
 export const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className
-      )}
-      plugins={streamdownPlugins}
-      {...props}
+<Streamdown
+  className={cn(
+    "w-full h-auto [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&>pre]:my-0",
+    className
+  )}
+  plugins={streamdownPlugins}
+  shikiTheme={["one-dark-pro", "one-dark-pro"]}
+  {...props}
     />
   ),
   (prevProps, nextProps) => prevProps.children === nextProps.children

@@ -23,17 +23,17 @@ const roleConfig = {
   user: {
     icon: User,
     badgeVariant: "default" as const,
-    badgeClass: "bg-primary hover:bg-primary",
+    badgeClass: "",
   },
   assistant: {
     icon: Bot,
     badgeVariant: "secondary" as const,
-    badgeClass: "bg-[#5a00d6] hover:bg-[#5a00d6]",
+    badgeClass: "bg-[#5a00d6] text-white hover:bg-[#5a00d6]",
   },
   tool: {
     icon: Wrench,
     badgeVariant: "outline" as const,
-    badgeClass: "border-purple-500 text-purple-600 bg-transparent",
+    badgeClass: "",
   },
 };
 
@@ -126,12 +126,12 @@ export function LogMessageCard({ message, compact = false }: LogMessageCardProps
         data-role={message.role}
       >
         <div className={cn("flex items-center gap-2 p-3 min-w-0")}>
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="ghost" size="sm" className={cn("h-6 w-6 p-0 hover:bg-black/10 dark:hover:bg-white/10 shrink-0")}>
-              {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            </Button>
-          </CollapsibleTrigger>
+<CollapsibleTrigger asChild>
+              <Button
+                variant="ghost" size="sm" className={cn("h-6 w-6 p-0 hover:bg-black/10 dark:hover:bg-white/10 shrink-0")}>
+                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
 
           <Badge
             variant={config.badgeVariant}
@@ -156,8 +156,8 @@ export function LogMessageCard({ message, compact = false }: LogMessageCardProps
         <CollapsibleContent className="min-w-0 max-w-full">
           <div className={cn("p-3 space-y-2 min-w-0 max-w-full [overflow-wrap:anywhere]")}>
             <Artifact className="max-w-full">
-              <ArtifactHeader className="flex items-center justify-between min-w-0">
-                <div className="min-w-0">
+              <ArtifactHeader>
+                <div className="min-w-0 flex flex-col gap-0.5">
                   <ArtifactTitle className="truncate">
                     {message.role === "tool"
                       ? (message.toolName ?? "Tool Output")
@@ -167,7 +167,7 @@ export function LogMessageCard({ message, compact = false }: LogMessageCardProps
                     Updated {new Date(message.timestamp).toLocaleTimeString()}
                   </ArtifactDescription>
                 </div>
-                <ArtifactActions className="flex items-center gap-2 shrink-0">
+                <ArtifactActions className="shrink-0 self-start">
                   {message.role === "tool" ? (
                     <>
                       <ArtifactAction
@@ -211,19 +211,19 @@ export function LogMessageCard({ message, compact = false }: LogMessageCardProps
                   )}
                 </ArtifactActions>
               </ArtifactHeader>
-              <ArtifactContent className="p-0 min-w-0 max-w-full">
+              <ArtifactContent className="p-0 pr-2 min-w-0 max-w-full bg-[#1a1a1a]">
                 {message.role === "tool" && isProbablyMarkdown(message.content) ? (
                   <ArtifactMarkdown>{message.content}</ArtifactMarkdown>
                 ) : (
                   <CodeBlock
-                    className="border-none min-w-0 max-w-full [&_pre]:whitespace-pre-wrap [&_pre]:break-all"
+                    className="border-none min-w-0 max-w-full [&_pre]:whitespace-pre-wrap [&_pre]:break-all !my-0"
                     code={message.content}
                     language={"text" as any}
                     showLineNumbers
                   />
                 )}
                 {message.thinking && (
-                  <div className="mt-2 p-2 rounded bg-black/5 dark:bg-white/5 text-xs italic">
+                  <div className="mt-2 p-2 bg-black/5 dark:bg-white/5 text-xs italic">
                     💭 {message.thinking}
                   </div>
                 )}
