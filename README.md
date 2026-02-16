@@ -41,28 +41,33 @@ Before running the dashboard, you need to tell it where your OpenClaw sessions a
 
 The dashboard will now automatically track and parse all your OpenClaw sessions.
 
-### 2. Run the Backend
+### 2. Run with Docker
+
+A Docker Compose configuration is provided to run both the backend and frontend together.
 
 ```bash
-cd backend
-python -m venv venv
-# Windows: .\venv\Scripts\activate
-# Linux/Mac: source venv/bin/activate
-pip install -r requirements.txt
-
-# Configure your API keys in .env (see Configuration section below)
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+# Build and start the services
+docker compose up --build
 ```
 
-### 3. Run the Frontend
+- Backend API will be available at **http://localhost:8000**
+- Frontend dashboard will be available at **http://localhost:3000**
+
+To stop the containers:
 
 ```bash
-cd next
-npm install
-npm run dev
+docker compose down
 ```
 
-Open **http://localhost:3000** in your browser.
+If you prefer to run only one component, you can specify the service name:
+
+```bash
+# Only the FastAPI backend
+docker compose up backend
+
+# Only the Next.js frontend
+docker compose up frontend
+```
 
 ---
 
