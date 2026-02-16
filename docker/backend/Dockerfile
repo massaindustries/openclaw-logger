@@ -7,14 +7,14 @@ WORKDIR /app
 # Install system dependencies (if any) - none needed for slim
 
 # Copy requirements and install
-COPY backend/requirements.txt ./backend/requirements.txt
-RUN pip install --no-cache-dir -r ./backend/requirements.txt
+COPY backend/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r ./requirements.txt
 
 # Copy the backend source code
-COPY backend/ ./backend/
+COPY backend/ ./
 
 # Expose FastAPI port
 EXPOSE 8000
 
 # Command to run the app
-CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

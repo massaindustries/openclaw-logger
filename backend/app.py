@@ -50,7 +50,17 @@ app.add_middleware(
 )
 
 # Default sessions directory is located at the repository root 'sessions' folder.
-SESSIONS_DIR = Path(__file__).resolve().parents[2] / "sessions"
+# In Docker, use /app/sessions; otherwise use the repository root.
+_sessions_dir_env = os.getenv("SESSIONS_DIR")
+if _sessions_dir_env:
+    SESSIONS_DIR = Path(_sessions_dir_env)
+else:
+    # When running locally (not in Docker), go up 2 levels from backend/app.py
+    try:
+        SESSIONS_DIR = Path(__file__).resolve().parents[2] / "sessions"
+    except IndexError:
+        # Fallback if path structure is different
+        SESSIONS_DIR = Path("sessions").resolve()
 
 
 def count_messages(file_path: Path) -> int:

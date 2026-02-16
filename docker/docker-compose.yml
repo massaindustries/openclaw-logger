@@ -8,6 +8,8 @@ services:
       - "8000:8000"
     env_file:
       - ./../backend/.env
+    environment:
+      - SESSIONS_DIR=/app/sessions
     volumes:
       - ../sessions:/app/sessions
     restart: unless-stopped
