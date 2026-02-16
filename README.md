@@ -213,6 +213,13 @@ uvicorn app:app --reload  # Development server
 
 ---
 
+## Docker Compose
+
+```bash
+# Build and run all services
+docker compose -f docker/docker-compose.yml up --build
+```
+
 ## Security & Privacy
 
 ### Your Data Stays Yours

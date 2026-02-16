@@ -2,7 +2,7 @@ import pytest
 import json
 import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
-from fastapi.testclient import TestClient
+
 
 # Import the app and provider classes
 import sys
@@ -175,7 +175,7 @@ async def test_regolo_stream_429_then_success():
 def test_chat_endpoint_handles_rate_limit_error():
     """Test that the /api/chat endpoint returns proper error for rate limits."""
     # This test verifies the endpoint structure
-    client = TestClient(app)
+
     
     # Basic request structure validation
     payload = {
