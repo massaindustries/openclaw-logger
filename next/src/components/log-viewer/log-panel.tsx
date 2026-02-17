@@ -5,6 +5,7 @@ import { LogMessage } from "@/types/log";
 import { LogMessageCard } from "./log-message-card";
 import { LogFilters } from "./log-filters";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface LogPanelProps {
@@ -26,6 +27,13 @@ export function LogPanel({
   const [roleFilter, setRoleFilter] = useState<"all" | "user" | "assistant" | "tool">("all");
   const [compactMode, setCompactMode] = useState(false);
   const [reverseOrder, setReverseOrder] = useState(false);
+
+  const resetAllFilters = () => {
+    setSearchQuery("");
+    setRoleFilter("all");
+    setCompactMode(false);
+    setReverseOrder(false);
+  };
 
   const filteredLogs = useMemo(() => {
     let result = logs;
@@ -53,7 +61,7 @@ export function LogPanel({
   if (isLoading) {
     return (
       <div className="h-full flex flex-col">
-        <div className="p-4 border-b">
+        <div className="p-4 border-b border-gray-600">
           <Skeleton className="h-10 w-full" />
         </div>
         <div className="flex-1 p-4 space-y-3">
@@ -66,7 +74,7 @@ export function LogPanel({
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#1a1a1a]">
+    <div className="h-full flex flex-col bg-[#1a1a1a] overflow-hidden min-w-0">
       <LogFilters
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -78,13 +86,19 @@ export function LogPanel({
         onReverseOrderChange={setReverseOrder}
         selectedCount={selectedContextIds.size}
         onClearSelection={onClearSelection}
+        onResetFilters={resetAllFilters}
       />
 
-      <ScrollArea className="flex-1">
-        <div className="p-3 space-y-2">
+
+      <ScrollArea 
+        className="flex-1 min-h-0
+          [&_[data-radix-scroll-area-viewport]]:max-w-full
+          [&_[data-radix-scroll-area-viewport]]:overflow-x-hidden"
+      >
+        <div className="pl-5 pr-2 space-y-2 min-w-0 max-w-full">
           {filteredLogs.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nessun messaggio trovato
+              No messages found
             </div>
           ) : (
             filteredLogs.map((log) => (
@@ -100,5 +114,3 @@ export function LogPanel({
     </div>
   );
 }
-
-import { useState } from "react";

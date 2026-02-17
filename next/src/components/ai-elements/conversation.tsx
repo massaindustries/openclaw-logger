@@ -59,9 +59,9 @@ export const ConversationEmptyState = ({
       <>
         {icon && <div className="text-muted-foreground">{icon}</div>}
         <div className="space-y-1">
-          <h3 className="font-medium text-sm">{title}</h3>
+          <h3 className="font-medium text-sm opacity-40">{title}</h3>
           {description && (
-            <p className="text-muted-foreground text-sm">{description}</p>
+            <p className="text-muted-foreground text-sm opacity-40">{description}</p>
           )}
         </div>
       </>
@@ -151,10 +151,10 @@ export const ConversationDownload = ({
 
   return (
     <Button
-      className={cn(
-        "absolute top-4 right-4 rounded-full dark:bg-background dark:hover:bg-muted",
-        className
-      )}
+className={cn(
+          "absolute top-4 right-4 rounded-full dark:bg-background dark:hover:bg-muted",
+          className
+        )}
       onClick={handleDownload}
       size="icon"
       type="button"

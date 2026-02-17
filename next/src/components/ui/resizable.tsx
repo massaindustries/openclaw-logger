@@ -48,12 +48,12 @@ function ResizableHandle({
     <ResizablePrimitive.Separator
       data-slot="resizable-handle"
       className={cn(
-        "relative flex w-2 items-center justify-center bg-border",
-        "data-[orientation=vertical]:h-2 data-[orientation=vertical]:w-full data-[orientation=vertical]:flex-col",
-        "data-[orientation=horizontal]:h-full data-[orientation=horizontal]:w-1",
-        "cursor-col-resize select-none touch-none",
-        "hover:bg-primary/50 data-[resize-handle-active=true]:bg-primary transition-colors",
-        className
+"relative flex w-0.5 items-center justify-center bg-[repeating-linear-gradient(45deg,rgba(34,34,34,0.5)_0,rgba(34,34,34,0.5)_1px,transparent_1px,transparent_5px)]",
+          "data-[orientation=vertical]:h-3 data-[orientation=vertical]:w-full data-[orientation=vertical]:flex-col",
+          "data-[orientation=horizontal]:h-full data-[orientation=horizontal]:w-0.5",
+          "cursor-col-resize select-none touch-none",
+          "hover:bg-primary/50 data-[separator=active]:bg-primary transition-colors",
+          className
       )}
       {...props}
     >

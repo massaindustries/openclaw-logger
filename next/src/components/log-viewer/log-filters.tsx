@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, ArrowUpDown, Users, Bot, Wrench, Trash } from "lucide-react";
 
 interface LogFiltersProps {
+  onResetFilters: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   roleFilter: "all" | "user" | "assistant" | "tool";
@@ -32,6 +33,7 @@ export function LogFilters({
   onReverseOrderChange,
   selectedCount,
   onClearSelection,
+  onResetFilters,
 }: LogFiltersProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -40,73 +42,58 @@ export function LogFilters({
   }, []);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 border-b bg-card">
-      <div className="relative flex-1 min-w-[200px]">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+    <>
+        {/* Fixed header height for central log panel – do not modify */}
+        <div className="flex items-center p-3 h-14 border-b border-[#222222] bg-[#111111] min-w-0 shrink-0">
+      <div className="relative flex-none w-[200px] min-w-[180px] mb-0 mr-2 hidden sm:flex">
+        <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Cerca nei messaggi..."
+          placeholder="Search messages..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9"
+          className="pl-9 h-8"
         />
-      </div>
+</div>
 
-      {mounted && (
-        <Select
-          value={roleFilter}
-          onValueChange={(v) => onRoleFilterChange(v as "all" | "user" | "assistant" | "tool")}
-        >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Filtra ruolo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tutti i ruoli</SelectItem>
-            <SelectItem value="user">
-              <span className="flex items-center gap-2">
-                <Users className="h-3 w-3" /> User
-              </span>
-            </SelectItem>
-            <SelectItem value="assistant">
-              <span className="flex items-center gap-2">
-                <Bot className="h-3 w-3" /> Assistant
-              </span>
-            </SelectItem>
-            <SelectItem value="tool">
-              <span className="flex items-center gap-2">
-                <Wrench className="h-3 w-3" /> Tool
-              </span>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex items-center gap-3 flex-nowrap">
         <div className="flex items-center gap-2">
           <Button
             variant={reverseOrder ? "default" : "outline"}
             size="sm"
             onClick={() => onReverseOrderChange(!reverseOrder)}
-            className="gap-1.5 whitespace-nowrap"
+            className="gap-1.5 whitespace-nowrap hidden md:flex"
           >
             <ArrowUpDown className="h-4 w-4" />
-            {reverseOrder ? "Recenti prima" : "Vecchi prima"}
+            {reverseOrder ? "Newest first" : "Oldest first"}
           </Button>
 
-          <div className="flex items-center gap-2 border rounded-md px-3 py-1.5">
-            <span className="text-sm whitespace-nowrap">Compatto</span>
+          <div className="flex items-center gap-2 border rounded-md px-3 py-1.5 hidden lg:flex">
+            <span className="text-sm whitespace-nowrap">Compact</span>
             <Switch
               checked={compactMode}
               onCheckedChange={onCompactModeChange}
             />
           </div>
+          <div className="hidden xl:flex"><Select value={roleFilter} onValueChange={onRoleFilterChange}>
+            <SelectTrigger className="w-[120px] flex items-center" size="sm">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="user">User</SelectItem>
+              <SelectItem value="assistant">Assistant</SelectItem>
+              <SelectItem value="tool">Tool</SelectItem>
+            </SelectContent>
+          </Select></div>
         </div>
 
         {selectedCount > 0 && (
-          <div className="flex items-center gap-2 ml-auto">
-            <Badge variant="secondary" className="gap-1">
-              <Users className="h-3 w-3" />
-              {selectedCount} selezionati
-            </Badge>
+          <div className="flex items-center gap-2 ml-auto hidden 2xl:flex">
+<span className="flex items-center gap-1 text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full whitespace-nowrap">
+                    <Users className="h-3 w-3" />
+                    {selectedCount} selected
+                  </span>
             <Button
               variant="ghost"
               size="sm"
@@ -118,6 +105,15 @@ export function LogFilters({
           </div>
         )}
       </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onResetFilters}
+        className="ml-auto whitespace-nowrap"
+      >
+        Reset filters
+      </Button>
     </div>
+    </>
   );
 }

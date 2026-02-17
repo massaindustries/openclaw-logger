@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LogMessage } from "@/types/log";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Copy, User, Bot, Wrench } from "lucide-react";
+import { ChevronDown, ChevronRight, User, Bot, Wrench, PlayIcon, CopyIcon, RefreshCwIcon, DownloadIcon, ShareIcon } from "lucide-react";
+import { Artifact, ArtifactHeader, ArtifactTitle, ArtifactDescription, ArtifactActions, ArtifactAction, ArtifactContent } from "@/components/ai-elements/artifact";
+import { isProbablyMarkdown } from "@/lib/markdown-utils";
+import { ArtifactMarkdown } from "@/components/ai-elements/artifact-markdown";
+import { CodeBlock } from "@/components/ai-elements/code-block";
 import { useLogStore } from "@/store/log-store";
 
 interface LogMessageCardProps {
@@ -19,23 +23,28 @@ const roleConfig = {
   user: {
     icon: User,
     badgeVariant: "default" as const,
-    badgeClass: "bg-orange-500 hover:bg-orange-600",
+    badgeClass: "",
   },
   assistant: {
     icon: Bot,
     badgeVariant: "secondary" as const,
-    badgeClass: "bg-gray-400 hover:bg-gray-500",
+    badgeClass: "bg-[#5a00d6] text-white hover:bg-[#5a00d6]",
   },
   tool: {
     icon: Wrench,
     badgeVariant: "outline" as const,
-    badgeClass: "border-purple-500 text-purple-600 bg-purple-100",
+    badgeClass: "",
   },
 };
 
 export function LogMessageCard({ message, compact = false }: LogMessageCardProps) {
   const [isOpen, setIsOpen] = useState(!compact);
   const [copied, setCopied] = useState(false);
+
+  // Sync open state with compact prop changes
+  useEffect(() => {
+    setIsOpen(!compact);
+  }, [compact]);
   const { selectedContextIds, toggleContextSelection } = useLogStore();
 
   const isSelected = selectedContextIds.has(message.id);
@@ -50,7 +59,7 @@ export function LogMessageCard({ message, compact = false }: LogMessageCardProps
 
   const formatTimestamp = (ts: string) => {
     const date = new Date(ts);
-    return date.toLocaleString("it-IT", {
+    return date.toLocaleString("en-US", {
       day: "2-digit",
       month: "2-digit",
       hour: "2-digit",
@@ -59,82 +68,167 @@ export function LogMessageCard({ message, compact = false }: LogMessageCardProps
     });
   };
 
+
+
+  // ----- Action handlers for tool artifact -----
+  const handleRun = () => {
+    console.log("Run tool output:", message.content);
+  };
+
+  const handleRegenerate = () => {
+    console.log("Regenerate requested for:", message.toolName);
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([message.content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${message.toolName ?? "artifact"}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      await navigator.share({
+        title: message.toolName ?? "Artifact",
+        text: message.content,
+      });
+    } else {
+      console.warn("Web Share API not supported");
+    }
+  };
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div
         className={cn(
-          "rounded-lg border transition-all duration-200",
-          "hover:shadow-lg hover:border-l-4",
+"message-debug rounded-r-lg border-gray-600 min-w-0 overflow-hidden mb-8",
           message.role === "user" && [
-            "bg-[var(--log-user-bg)] border-orange-200 dark:border-orange-800 border-l-orange-400",
+            "bg-[var(--log-user-bg)] border-primary dark:border-primary border-l-primary border-l-4",
             "text-[var(--log-user-text)]",
           ],
           message.role === "assistant" && [
-            "bg-[var(--log-assistant-bg)] border-gray-200 dark:border-gray-700 border-l-gray-400",
+            "bg-[var(--log-assistant-bg)] border-gray-600 dark:border-gray-800 border-l-4 border-l-[#5a00d6] dark:border-l-[#5a00d6]",
             "text-[var(--log-assistant-text)]",
           ],
           message.role === "tool" && [
-            "bg-[var(--log-tool-bg)] border-purple-200 dark:border-purple-700 border-l-purple-400",
+            "bg-[var(--log-tool-bg)] border-purple-600 dark:border-purple-800 border-l-purple-600",
             "text-[var(--log-tool-text)]",
           ]
         )}
+        style={{ 
+          maxWidth: "95%", 
+          width: "fit-content",
+          alignSelf: message.role === "user" ? "flex-end" : "flex-start"
+        }}
+        data-role={message.role}
       >
-        <div className={cn("flex items-center gap-2 p-3 border-b border-black/5 dark:border-white/10", message.role === "user" ? "flex-row-reverse" : "flex-row")}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-black/10 dark:hover:bg-white/10">
-              {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            </Button>
-          </CollapsibleTrigger>
+        <div className={cn("flex items-center gap-2 p-3 min-w-0")}>
+<CollapsibleTrigger asChild>
+              <Button
+                variant="ghost" size="sm" className={cn("h-6 w-6 p-0 hover:bg-black/10 dark:hover:bg-white/10 shrink-0")}>
+                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
 
           <Badge
             variant={config.badgeVariant}
-            className={cn("gap-1", config.badgeClass)}
+            className={cn("gap-1 shrink-0", config.badgeClass)}
           >
             <Icon className="h-3 w-3" />
-            <span className="capitalize">{message.role}</span>
+            <span className="capitalize font-code">{message.role}</span>
           </Badge>
 
-          <span className={cn("text-xs opacity-70", message.role === "user" ? "ml-auto" : "mr-auto")}>
+          <span className={cn("text-xs opacity-70 shrink-0")}>
             {formatTimestamp(message.timestamp)}
           </span>
 
-          <Checkbox
-            id={`select-${message.id}`}
-            checked={isSelected}
-            onCheckedChange={() => toggleContextSelection(message.id)}
-            className="h-4 w-4 border-current"
-          />
+<Checkbox
+              id={`select-${message.id}`}
+              checked={isSelected}
+              onCheckedChange={() => toggleContextSelection(message.id)}
+              className="ml-auto h-4 w-4 border-current shrink-0"
+            />
         </div>
 
-        <CollapsibleContent>
-          <div className={cn("p-3 space-y-2", message.role === "user" ? "mr-4" : "ml-4")}>
-            {message.toolName && (
-              <div className="text-xs font-medium opacity-70">
-                Tool: {message.toolName}
-              </div>
-            )}
-
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-              {message.content}
-            </div>
-
-            {message.thinking && (
-              <div className="mt-2 p-2 rounded bg-black/5 dark:bg-white/5 text-xs italic">
-                💭 {message.thinking}
-              </div>
-            )}
-
-            <div className="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopy}
-                className="gap-1 text-xs"
-              >
-                <Copy className="h-3 w-3" />
-                {copied ? "Copiato!" : "Copia"}
-              </Button>
-            </div>
+        <CollapsibleContent className="min-w-0 max-w-full">
+          <div className={cn("p-3 space-y-2 min-w-0 max-w-full [overflow-wrap:anywhere]")}>
+            <Artifact className="max-w-full">
+              <ArtifactHeader>
+                <div className="min-w-0 flex flex-col gap-0.5">
+                  <ArtifactTitle className="truncate">
+                    {message.role === "tool"
+                      ? (message.toolName ?? "Tool Output")
+                      : message.role.charAt(0).toUpperCase() + message.role.slice(1)}
+                  </ArtifactTitle>
+                  <ArtifactDescription>
+                    Updated {new Date(message.timestamp).toLocaleTimeString()}
+                  </ArtifactDescription>
+                </div>
+                <ArtifactActions className="shrink-0 self-start">
+                  {message.role === "tool" ? (
+                    <>
+                      <ArtifactAction
+                        icon={PlayIcon}
+                        label="Run"
+                        tooltip="Run code"
+                        onClick={handleRun}
+                      />
+                      <ArtifactAction
+                        icon={CopyIcon}
+                        label="Copy"
+                        tooltip="Copy to clipboard"
+                        onClick={handleCopy}
+                      />
+                      <ArtifactAction
+                        icon={RefreshCwIcon}
+                        label="Regenerate"
+                        tooltip="Regenerate content"
+                        onClick={handleRegenerate}
+                      />
+                      <ArtifactAction
+                        icon={DownloadIcon}
+                        label="Download"
+                        tooltip="Download file"
+                        onClick={handleDownload}
+                      />
+                      <ArtifactAction
+                        icon={ShareIcon}
+                        label="Share"
+                        tooltip="Share artifact"
+                        onClick={handleShare}
+                      />
+                    </>
+                  ) : (
+                    <ArtifactAction
+                      icon={CopyIcon}
+                      label="Copy"
+                      tooltip="Copy to clipboard"
+                      onClick={handleCopy}
+                    />
+                  )}
+                </ArtifactActions>
+              </ArtifactHeader>
+              <ArtifactContent className="pl-4 pr-2 min-w-0 max-w-full bg-[#1a1a1a]">
+                {message.role === "tool" && isProbablyMarkdown(message.content) ? (
+                  <ArtifactMarkdown>{message.content}</ArtifactMarkdown>
+                ) : (
+                  <CodeBlock
+                    className="border-none min-w-0 max-w-full [&_pre]:whitespace-pre-wrap [&_pre]:break-all !my-0"
+                    code={message.content}
+                    language={"text" as any}
+                    showLineNumbers
+                  />
+                )}
+                {message.thinking && (
+                  <div className="mt-2 p-2 bg-black/5 dark:bg-white/5 text-xs italic">
+                    💭 {message.thinking}
+                  </div>
+                )}
+              </ArtifactContent>
+            </Artifact>
           </div>
         </CollapsibleContent>
       </div>

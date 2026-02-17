@@ -55,12 +55,19 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { LogMessage } from "@/types/log";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   CornerDownLeftIcon,
   ImageIcon,
   PlusIcon,
   SquareIcon,
   XIcon,
+  User,
+  Bot,
+  Wrench,
+  Paperclip,
 } from "lucide-react";
 import { nanoid } from "nanoid";
 import {
@@ -386,7 +393,34 @@ export type PromptInputProps = Omit<
     message: PromptInputMessage,
     event: FormEvent<HTMLFormElement>
   ) => void | Promise<void>;
+  // Selected context logs from the session
+  selectedLogs?: LogMessage[];
+  onRemoveLog?: (id: string) => void;
+  onClearSelection?: () => void;
 };
+
+const roleConfig = {
+  user: {
+    icon: User,
+    label: "User",
+    color: "bg-primary/20 border-primary text-primary-foreground hover:bg-primary/30",
+  },
+assistant: {
+      icon: Bot,
+      label: "Assistant",
+      color: "bg-[#5a00d6]/20 border-[#5a00d6] text-white hover:bg-[#5a00d6]/30",
+    },
+  tool: {
+    icon: Wrench,
+    label: "Tool",
+    color: "bg-[#3700c0]/20 border-[#3700c0] text-white hover:bg-[#3700c0]/30",
+  },
+};
+
+function truncateContent(content: string, maxLength: number = 60) {
+  if (content.length <= maxLength) return content;
+  return content.slice(0, maxLength).trim() + "...";
+}
 
 export const PromptInput = ({
   className,
@@ -398,9 +432,15 @@ export const PromptInput = ({
   maxFileSize,
   onError,
   onSubmit,
+  selectedLogs = [],
+  onRemoveLog,
+  onClearSelection,
   children,
   ...props
 }: PromptInputProps) => {
+  // State for context panel expansion - moved outside ContextPanel to persist across renders
+  const [isContextExpanded, setIsContextExpanded] = useState(false);
+  
   // Try to use a provider controller if present
   const controller = useOptionalPromptInputController();
   const usingProvider = !!controller;
@@ -780,6 +820,112 @@ export const PromptInput = ({
     [usingProvider, controller, files, onSubmit, clear]
   );
 
+  // Context Panel Component (original design with chips and optional vertical details)
+  const ContextPanel = () => {
+    if (selectedLogs.length === 0) {
+      return null;
+    }
+
+    const visibleCount = 3;
+    const hasMore = selectedLogs.length > visibleCount;
+    const visibleLogs = selectedLogs.slice(0, visibleCount);
+    const remainingCount = selectedLogs.length - visibleCount;
+
+    return (
+      <div className="border-b border-[#333333] bg-[#1a1a1a] order-first w-full" style={{ fontFamily: "'Google Sans Code', monospace", borderLeft: "3px solid #ff5655", borderTopLeftRadius: "0", borderBottomLeftRadius: "0", borderTopRightRadius: "0.375rem", borderBottomRightRadius: "0", backgroundColor: "#1a1a1a" }}>
+        {/* Horizontal Chips Row */}
+        <div className="px-3 py-2 flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs text-gray-400 mr-1">
+            <Paperclip className="h-3 w-3" />
+            <span className="font-medium">Context:</span>
+          </div>
+
+          {visibleLogs.map((log) => {
+            const config = roleConfig[log.role];
+            const Icon = config.icon;
+
+            return (
+              <Badge
+                key={log.id}
+                variant="outline"
+                className={cn(
+                  "flex items-center gap-1 px-1.5 py-0.5 text-[10px] cursor-default",
+                  "transition-all duration-200 hover:opacity-80",
+                  config.color
+                )}
+              >
+                <Icon className="h-2.5 w-2.5" />
+                <span className="max-w-[100px] truncate">
+                  {truncateContent(log.content, 20)}
+                </span>
+                {onRemoveLog && (
+                  <button
+                    onClick={() => onRemoveLog(log.id)}
+                    className="ml-0.5 hover:bg-black/20 rounded-full p-0.5 transition-colors"
+                    title="Remove from context"
+                  >
+                    <XIcon className="h-2.5 w-2.5" />
+                  </button>
+                )}
+              </Badge>
+            );
+          })}
+
+          {hasMore && (
+            <Badge
+              variant="outline"
+              className="px-1.5 py-0.5 text-[10px] bg-gray-800/50 text-gray-400 border-gray-700 cursor-pointer hover:bg-gray-800"
+              onClick={() => setIsContextExpanded(!isContextExpanded)}
+            >
+              +{remainingCount} more
+            </Badge>
+          )}
+
+        </div>
+
+        {/* Expanded Panel - Shows all logs when expanded (simple conditional rendering) */}
+        {isContextExpanded && (
+          <div className="px-3 py-2 flex flex-wrap gap-1.5 border-t border-[#333333]">
+            {selectedLogs.map((log) => {
+              const config = roleConfig[log.role];
+              const Icon = config.icon;
+
+              return (
+                <Badge
+                  key={log.id}
+                  variant="outline"
+                  className={cn(
+                    "flex items-center gap-1 px-1.5 py-0.5 text-[10px] cursor-default",
+                    "transition-all duration-200 hover:opacity-80",
+                    config.color
+                  )}
+                >
+                  <Icon className="h-2.5 w-2.5" />
+                  <span className="max-w-[150px] truncate">
+                    {truncateContent(log.content, 30)}
+                  </span>
+                  {onRemoveLog && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveLog(log.id);
+                      }}
+                      className="ml-0.5 hover:bg-black/20 rounded-full p-0.5 transition-colors"
+                      title="Remove from context"
+                    >
+                      <XIcon className="h-2.5 w-2.5" />
+                    </button>
+                  )}
+                </Badge>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Render with or without local provider
   const inner = (
     <>
@@ -799,7 +945,10 @@ export const PromptInput = ({
         ref={formRef}
         {...props}
       >
-        <InputGroup className="overflow-hidden">{children}</InputGroup>
+        <InputGroup className="overflow-hidden border-[#444444] items-start">
+          <ContextPanel />
+          {children}
+        </InputGroup>
       </form>
     </>
   );
@@ -933,7 +1082,7 @@ export const PromptInputTextarea = ({
 
   return (
     <InputGroupTextarea
-      className={cn("field-sizing-content max-h-48 min-h-16", className)}
+      className={cn("field-sizing-content max-h-48 min-h-16 font-code", className)}
       name="message"
       onCompositionEnd={handleCompositionEnd}
       onCompositionStart={handleCompositionStart}
@@ -1128,8 +1277,8 @@ export const PromptInputSubmit = ({
   return (
     <InputGroupButton
       aria-label={isGenerating ? "Stop" : "Submit"}
-      className={cn(className)}
-      onClick={handleClick}
+className={cn(className)}
+        onClick={handleClick}
       size={size}
       type={isGenerating && onStop ? "button" : "submit"}
       variant={variant}

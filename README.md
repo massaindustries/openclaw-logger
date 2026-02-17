@@ -1,109 +1,235 @@
-# Log Viewer Dashboard
+# OpenClaw Logger 🦞🪵
 
-Modern web dashboard per visualizzare e analizzare sessioni AI con streaming in tempo reale.
+**Session Tracker & Analytics Dashboard**
 
-## Stack Tecnologico
+A modern web dashboard to track, monitor, and analyze your OpenClaw AI agent sessions in real time. Full transparency. Fully local. No black boxes.
 
-- **Frontend**: Next.js 16 + shadcn/ui + Tailwind CSS
-- **Backend**: FastAPI + Python
-- **Chat Streaming**: SSE (Server-Sent Events)
-- **Multi-Provider**: OpenAI, Anthropic, Google, Grok
 
-## Struttura
 
-```
-log-viewer/
-├── next/               # Frontend Next.js
-│   ├── src/
-│   │   ├── app/        # App Router
-│   │   ├── components/ # Componenti React
-│   │   ├── lib/        # Utility
-│   │   └── store/      # Zustand state
-├── backend/           # Backend FastAPI
-│   ├── providers/      # Adattatori LLM
-│   └── app.py         # API server
-```
+## Why OpenClaw Logger?
 
-## Quick Start
+OpenClaw agents are powerful but opaque.
+When running critical tasks, you shouldn’t have to wait for the final report to understand what happened.
 
-### 1. Backend
+
+*All the Automation Industry in the world relies on one single principle : correcting the system's actions with costant feedback by the obtained output, so we implemented this key point in Openclaw.*
+
+OpenClaw Logger gives you:
+
+* **Real-time transparency** : See every message and tool call
+* **Local-only processing** : Nothing leaves your machine
+* **Behavior analytics** : Understand patterns and loops
+* **AI-assisted debugging** : Ask contextual questions about selected logs
+
+
+---
+
+
+<img width="1920" height="1080" alt="Openclaw (1)" src="https://github.com/user-attachments/assets/b336407e-5b71-424d-806f-5c52db08be11" />
+
+
+---
+
+## Tech Stack
+
+OpenClaw Logger is intentionally minimal, deterministic, and locally executable. The architecture separates visualization, parsing, and inference routing.
+
+### Frontend
+
+* **Next.js 16**
+* **React 19**
+* **Tailwind CSS**
+* **shadcn/ui**
+
+### Backend
+
+* **FastAPI**
+* **Python 3.12+**
+* **Uvicorn**
+* **Async I/O**
+* **LLM Provider Adapters**
+* **SSE Streaming Layer**
+
+### AI Providers
+
+* Regolo.ai
+* OpenAI
+* Anthropic
+* Google
+* xAI
+
+### Deployment Options
+
+* Local development (Node + Python)
+* Docker Compose
+<br>
+
+The stack is deliberately simple: no database, no telemetry, no external logging layer.
+Filesystem in, structured visualization out.
+
+
+
+<br>
+<br>
+<br>
+
+# Quick Start (Local Development)
+
+This runs **backend + frontend** without Docker.
+
+
+## 1️⃣ Start the Backend (FastAPI)
 
 ```bash
 cd backend
+
 python -m venv venv
-source venv/bin/activate  # Windows: .\venv\Scripts\activate
+source venv/bin/activate      # Linux / Mac
+# or
+.\venv\Scripts\activate       # Windows
+
 pip install -r requirements.txt
 
-# Configura le API keys nel file .env
 uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 2. Frontend
+Backend will run at:
+
+```
+http://localhost:8000
+```
+
+Keep this terminal open.
+
+<br>
+<br>
+
+
+## 2️⃣ Start the Frontend (Next.js)
+
+Open a new terminal:
 
 ```bash
 cd next
+
 npm install
 npm run dev
 ```
 
-Apri http://localhost:3000
+Frontend will run at:
 
-## Configurazione Provider LLM
-
-Crea `.env` nella cartella `backend/`:
-
-```env
-# OpenAI (default)
-OPENAI_API_KEY=sk-...
-
-# OpenAI Compatible
-OPENAI_BASE_URL=https://api.openai.com/v1
-
-# Anthropic
-ANTHROPIC_API_KEY=sk-ant-api...
-
-# Google
-GOOGLE_API_KEY=AI...
-
-# xAI Grok
-GROK_API_KEY=xai-...
+```
+http://localhost:3000
 ```
 
-## Funzionalità
+Open it in your browser.
 
-### Pannello Sinistro - Sessioni
-- Lista sessioni con polling automatico (5s)
-- Click per caricare i log
-- Badge con conteggio messaggi
 
-### Pannello Centrale - Log
-- Card ibride espandibili (click sulla freccia)
-- Filtri per ruolo (User/Assistant/Tool)
-- Ricerca testuale
-- Modalità compatta
-- Inverti ordine cronologico
-- Seleziona messaggi per contesto
+<br>
+<br>
 
-### Pannello Destro - Chat AI
-- Streaming SSE in tempo reale
-- Seleziona provider e modello
-- Contesto dai log selezionati
-- Messaggi persistenti
 
-## Sviluppo
+## 3️⃣ Configure Your OpenClaw Sessions Path
+
+1. Locate your OpenClaw sessions folder:
+
+```
+.openclaw/agents/main/sessions
+```
+
+2. In the dashboard:
+
+   * Go to **Sessions**
+   * Enter the full path to that folder
+   * Click **Save**
+
+The Logger will now auto-poll every 5 seconds and parse sessions live.
+
+<br>
+<br>
+
+# Quick Start (Docker)
+
+If you prefer full containerization:
 
 ```bash
-# Frontend
-cd next
-npm run dev      # Development
-npm run build    # Production build
-npm run lint     # Linting
-
-# Backend
-cd backend
-uvicorn app:app --reload
+docker compose -f docker/docker-compose.yml up --build
 ```
 
-## License
+Frontend:
 
-MIT
+```
+http://localhost:3000
+```
+
+Backend:
+
+```
+http://localhost:8000
+```
+
+To stop:
+
+```bash
+docker compose down
+```
+<br>
+<br>
+<br>
+
+
+# Architecture
+
+```
+openclaw-logger/
+├── next/        # Frontend (Next.js 16 + Tailwind + Zustand)
+├── backend/     # FastAPI + SSE + LLM providers
+└── docker/
+```
+<br>
+<br>
+<br>
+
+# AI Configuration
+
+Insert your API keys inside the chat settings panel to use your chat as knowledge and actively debug with an AI-Chatbot.
+
+Supported providers:
+
+* Regolo.ai (racommended)
+* OpenAI
+* Anthropic
+* Google
+* Grok
+
+<br>
+
+
+## Why [Regolo.ai](https://regolo.ai)? 🇪🇺
+
+We selected [Regolo.ai](https://regolo.ai) as our primary provider for two critical engineering constraints: zero-retention guarantees and low-latency inference.
+
+For privacy-first deployments, Regolo.ai represents a structurally stronger option:
+
+- 100% EU-based infrastructure (Italy)
+- Zero data retention by design
+- Full GDPR compliance
+- Renewable-energy powered data centers
+
+If your architecture must satisfy strict European sovereignty, regulatory compliance, and data minimization principles, this choice is not ideological — it is technical risk management.
+
+In systems engineering, constraints define quality. Here, jurisdiction is a constraint.
+
+
+
+# Security Model
+
+* Session files are read locally
+* No telemetry
+* No automatic external transmission
+* API calls only occur when you explicitly chat with an LLM
+
+This tool exists to remove opacity—not introduce new attack surfaces.
+
+
+

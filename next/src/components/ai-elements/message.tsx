@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { cjk } from "@streamdown/cjk";
-import { code } from "@streamdown/code";
+import { createCodePlugin } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
@@ -38,8 +38,10 @@ export type MessageProps = HTMLAttributes<HTMLDivElement> & {
 export const Message = ({ className, from, ...props }: MessageProps) => (
   <div
     className={cn(
-      "group flex w-full max-w-[95%] flex-col gap-2",
-      from === "user" ? "is-user ml-auto justify-end" : "is-assistant",
+      "group flex w-full max-w-[95%] flex-col gap-1 border-none",
+      from === "user"
+        ? "is-user ml-auto justify-end"
+        : "is-assistant",
       className
     )}
     {...props}
@@ -55,11 +57,12 @@ export const MessageContent = ({
 }: MessageContentProps) => (
   <div
     className={cn(
-      "is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm",
-      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
-      "group-[.is-assistant]:text-foreground",
+      "is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-1 overflow-hidden text-sm",
+      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:px-5 group-[.is-user]:py-4 group-[.is-user]:text-white",
+      "group-[.is-assistant]:text-white","group-[.is-tool]:bg-[var(--log-tool-bg)] group-[.is-tool]:text-[var(--log-tool-text)]",
       className
     )}
+    style={props.style}
     {...props}
   >
     {children}
@@ -270,6 +273,7 @@ export const MessageBranchPrevious = ({
       type="button"
       variant="ghost"
       {...props}
+      className={cn(props.className)}
     >
       {children ?? <ChevronLeftIcon size={14} />}
     </Button>
@@ -293,6 +297,7 @@ export const MessageBranchNext = ({
       type="button"
       variant="ghost"
       {...props}
+      className={cn(props.className)}
     >
       {children ?? <ChevronRightIcon size={14} />}
     </Button>
@@ -322,17 +327,19 @@ export const MessageBranchPage = ({
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
-const streamdownPlugins = { cjk, code, math, mermaid };
+const codePlugin = createCodePlugin({ themes: ["one-dark-pro", "one-dark-pro"] });
+const streamdownPlugins = { cjk, code: codePlugin, math, mermaid };
 
 export const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className
-      )}
-      plugins={streamdownPlugins}
-      {...props}
+<Streamdown
+  className={cn(
+    "w-full h-auto [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&>pre]:my-0",
+    className
+  )}
+  plugins={streamdownPlugins}
+  shikiTheme={["one-dark-pro", "one-dark-pro"]}
+  {...props}
     />
   ),
   (prevProps, nextProps) => prevProps.children === nextProps.children
