@@ -6,6 +6,10 @@ A modern web dashboard to track, monitor, and analyze your OpenClaw AI agent ses
 
 
 
+https://github.com/user-attachments/assets/b31a65da-747f-4f18-bae1-caaa64f1641d
+
+
+
 ## Why OpenClaw Logger?
 
 OpenClaw agents are powerful but opaque.
@@ -29,45 +33,6 @@ OpenClaw Logger gives you:
 
 
 ---
-
-## Tech Stack
-
-OpenClaw Logger is intentionally minimal, deterministic, and locally executable. The architecture separates visualization, parsing, and inference routing.
-
-### Frontend
-
-* **Next.js 16**
-* **React 19**
-* **Tailwind CSS**
-* **shadcn/ui**
-
-### Backend
-
-* **FastAPI**
-* **Python 3.12+**
-* **Uvicorn**
-* **Async I/O**
-* **LLM Provider Adapters**
-* **SSE Streaming Layer**
-
-### AI Providers
-
-* Regolo.ai
-* OpenAI
-* Anthropic
-* Google
-* xAI
-
-### Deployment Options
-
-* Local development (Node + Python)
-* Docker Compose
-<br>
-
-The stack is deliberately simple: no database, no telemetry, no external logging layer.
-Filesystem in, structured visualization out.
-
-
 
 <br>
 <br>
@@ -134,7 +99,7 @@ Open it in your browser.
 1. Locate your OpenClaw sessions folder:
 
 ```
-.openclaw/agents/main/sessions
+.openclaw/agents/(name of the agent)/sessions
 ```
 
 2. In the dashboard:
@@ -187,7 +152,6 @@ docker compose down
 ```
 <br>
 <br>
-<br>
 
 
 # Architecture
@@ -198,7 +162,6 @@ openclaw-logger/
 ├── backend/     # FastAPI + SSE + LLM providers
 └── docker/
 ```
-<br>
 <br>
 <br>
 
@@ -242,6 +205,52 @@ In systems engineering, constraints define quality. Here, jurisdiction is a cons
 * API calls only occur when you explicitly chat with an LLM
 
 This tool exists to remove opacity—not introduce new attack surfaces.
+
+
+
+<br>
+<br>
+
+
+## Tech Stack
+
+OpenClaw Logger is intentionally minimal, deterministic, and locally executable. The architecture separates visualization, parsing, and inference routing.
+
+### Frontend
+
+* **Next.js 16**
+* **React 19**
+* **Tailwind CSS**
+* **shadcn/ui**
+
+### Backend
+
+* **FastAPI**
+* **Python 3.12+**
+* **Uvicorn**
+* **Async I/O**
+* **LLM Provider Adapters**
+* **SSE Streaming Layer**
+
+### AI Providers
+
+* Regolo.ai
+* OpenAI
+* Anthropic
+* Google
+* xAI
+
+### Deployment Options
+
+* Local development (Node + Python)
+* Docker Compose
+<br>
+
+The stack is deliberately simple: no database, no telemetry, no external logging layer.
+Filesystem in, structured visualization out.
+
+
+
 
 
 
