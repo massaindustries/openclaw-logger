@@ -152,6 +152,18 @@ The Logger will now auto-poll every 5 seconds and parse sessions live.
 
 If you prefer full containerization:
 
+## 1️⃣ Configure Sessions Path
+
+Before running Docker, declare the path to your OpenClaw sessions:
+
+```bash
+export SESSIONS_PATH=/path/to/.openclaw/agents/main/sessions
+```
+
+Replace `/path/to/.openclaw/agents/main/sessions` with your actual sessions directory path.
+
+## 2️⃣ Start Containers
+
 ```bash
 docker compose -f docker/docker-compose.yml up --build
 ```
@@ -168,7 +180,7 @@ Backend:
 http://localhost:8000
 ```
 
-To stop:
+## 3️⃣ Stop Containers
 
 ```bash
 docker compose down

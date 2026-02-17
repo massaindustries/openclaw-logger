@@ -8,10 +8,11 @@ services:
       - "8000:8000"
     env_file:
       - ./../backend/.env
+      - ./.env
     environment:
       - SESSIONS_DIR=/app/sessions
     volumes:
-      - /home/rdseeweb/regolo-openclaw/openclaw-logger/sessions:/app/sessions
+      - ${SESSIONS_PATH}:/app/sessions
     restart: unless-stopped
   frontend:
     build:
