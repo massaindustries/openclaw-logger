@@ -99,7 +99,7 @@ Open it in your browser.
 1. Locate your OpenClaw sessions folder:
 
 ```
-.openclaw/agents/main/sessions
+.openclaw/agents/(name of the agent)/sessions
 ```
 
 2. In the dashboard:
@@ -236,6 +236,7 @@ OpenClaw Logger is intentionally minimal, deterministic, and locally executable.
 
 The stack is deliberately simple: no database, no telemetry, no external logging layer.
 Filesystem in, structured visualization out.
+
 
 
 
